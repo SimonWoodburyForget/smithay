@@ -123,6 +123,8 @@ pub unsafe trait NativeDisplay<B: Backend> {
     ///
     /// Default implementation returns an empty list
     fn attributes(&self) -> Vec<ffi::EGLint> { Vec::with_capacity(0) }
+    /// Type of surfaces created
+    fn surface_type(&self) -> ffi::EGLint { ffi::egl::WINDOW_BIT as ffi::EGLint }
     /// Create a surface
     fn create_surface(&mut self, args: Self::Arguments) -> Result<B::Surface, Self::Error>;
 }
