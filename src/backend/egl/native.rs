@@ -1,6 +1,7 @@
 //! Type safe native types for safe context/surface creation
 
-use super::{ffi, wrap_egl_call, EGLError, Error};
+use super::{ffi, Error, EGLError, display::EGLDisplayHandle, SurfaceCreationError, wrap_egl_call};
+use nix::libc::{c_void, c_int};
 
 #[cfg(feature = "backend_winit")]
 use wayland_egl as wegl;
@@ -188,8 +189,13 @@ pub unsafe trait NativeSurface {
     /// Error of the underlying surface
     type Error: std::error::Error;
 
-    /// Return a raw pointer egl will accept for surface creation.
-    fn ptr(&self) -> ffi::NativeWindowType;
+    /// Create an EGLSurface from the internal native type
+    unsafe fn create(
+        &self,
+        display: &EGLDisplayHandle,
+        config_id: ffi::egl::types::EGLConfig,
+        surface_attributes: &[c_int]
+    ) -> Result<*const c_void, SurfaceCreationError<Self::Error>>;
 
     /// Will be called to check if any internal resources will need
     /// to be recreated. Old resources must be used until `recreate`
@@ -235,8 +241,18 @@ unsafe impl NativeSurface for XlibWindow {
     // type Error = !; (https://github.com/rust-lang/rust/issues/35121)
     type Error = Never;
 
-    fn ptr(&self) -> ffi::NativeWindowType {
-        self.0 as *const _
+    unsafe fn create(
+        &self,
+        display: &EGLDisplayHandle,
+        config_id: ffi::egl::types::EGLConfig,
+        surface_attributes: &[c_int]
+    ) -> Result<*const c_void, SurfaceCreationError<Never>> {
+        wrap_egl_call(|| ffi::egl::CreateWindowSurface(
+            display.handle,
+            config_id,
+            self.0 as *const _,
+            surface_attributes.as_ptr(),
+        )).map_err(SurfaceCreationError::EGLSurfaceCreationFailed)
     }
 }
 
@@ -245,7 +261,16 @@ unsafe impl NativeSurface for wegl::WlEglSurface {
     // type Error = !;
     type Error = Never;
 
-    fn ptr(&self) -> ffi::NativeWindowType {
-        self.ptr() as *const _
+    unsafe fn create(&self,
+        display: &EGLDisplayHandle,
+        config_id: ffi::egl::types::EGLConfig,
+        surface_attributes: &[c_int]
+    ) -> Result<*const c_void, SurfaceCreationError<Never>> {
+        wrap_egl_call(|| ffi::egl::CreateWindowSurface(
+            display.handle,
+            config_id,
+            self.ptr() as *const _,
+            surface_attributes.as_ptr(),
+        )).map_err(SurfaceCreationError::EGLSurfaceCreationFailed)
     }
 }
