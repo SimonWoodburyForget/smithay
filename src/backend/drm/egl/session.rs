@@ -28,15 +28,14 @@ pub struct EglDeviceObserver<S: SessionObserver + 'static, N: NativeSurface + Su
 impl<S, B, D> AsSessionObserver<EglDeviceObserver<S, <D as Device>::Surface>> for EglDevice<B, D>
 where
     S: SessionObserver + 'static,
-    B: Backend<Surface = <D as Device>::Surface> + 'static,
+    B: Backend<Surface = <D as Device>::Surface, Error = <<D as Device>::Surface as Surface>::Error> + 'static,
     D: Device
         + NativeDisplay<
             B,
             Arguments = (crtc::Handle, Mode, Vec<connector::Handle>),
-            Error = <<D as Device>::Surface as Surface>::Error,
         > + AsSessionObserver<S>
         + 'static,
-    <D as Device>::Surface: NativeSurface,
+    <D as Device>::Surface: NativeSurface<Error = <<D as Device>::Surface as Surface>::Error>,
 {
     fn observer(&mut self) -> EglDeviceObserver<S, <D as Device>::Surface> {
         EglDeviceObserver {

@@ -1,6 +1,6 @@
 //! EGL surface related structs
 
-use super::{ffi, native, wrap_egl_call, EGLError, SwapBuffersError};
+use super::{ffi, native, wrap_egl_call, EGLError, SwapBuffersError, SurfaceCreationError};
 use crate::backend::egl::display::EGLDisplayHandle;
 use crate::backend::graphics::PixelFormat;
 use nix::libc::c_int;
@@ -42,7 +42,7 @@ impl<N: native::NativeSurface> EGLSurface<N> {
         config: ffi::egl::types::EGLConfig,
         native: N,
         log: L,
-    ) -> Result<EGLSurface<N>, EGLError>
+    ) -> Result<EGLSurface<N>, SurfaceCreationError<N::Error>>
     where
         L: Into<Option<::slog::Logger>>,
     {
@@ -74,7 +74,7 @@ impl<N: native::NativeSurface> EGLSurface<N> {
         };
 
         if surface == ffi::egl::NO_SURFACE {
-            return Err(EGLError::BadSurface);
+            return Err(SurfaceCreationError::EGLSurfaceCreationFailed(EGLError::BadSurface));
         }
 
         Ok(EGLSurface {
@@ -108,15 +108,14 @@ impl<N: native::NativeSurface> EGLSurface<N> {
         };
 
         if self.native.needs_recreation() || surface.is_null() || is_bad_surface {
-            self.native.recreate().map_err(SwapBuffersError::Underlying)?;
             if !surface.is_null() {
                 let _ = unsafe { ffi::egl::DestroySurface(**self.display, surface as *const _) };
             }
-            //TODO remove recreate
-            self.native.recreate();
             self.surface.set(unsafe {
-                self.native.create(&*self.display, self.config_id, &self.surface_attributes)
-                    .map_err(SwapBuffersError::EGLCreateWindowSurface)?
+                self.native.create(&*self.display, self.config_id, &self.surface_attributes).map_err(|err| match err {
+                    SurfaceCreationError::EGLSurfaceCreationFailed(err) => SwapBuffersError::EGLCreateWindowSurface(err),
+                    SurfaceCreationError::NativeSurfaceCreationFailed(err) => SwapBuffersError::Underlying(err),
+                })?
             });
 
             result.map_err(|err| {

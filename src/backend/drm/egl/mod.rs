@@ -52,11 +52,11 @@ type BackendRef<D> = Weak<EglSurfaceInternal<<D as Device>::Surface>>;
 /// Representation of an egl device to create egl rendering surfaces
 pub struct EglDevice<B, D>
 where
-    B: Backend<Surface = <D as Device>::Surface> + 'static,
+    B: Backend<Surface = <D as Device>::Surface, Error = <<D as Device>::Surface as Surface>::Error> + 'static,
     D: Device
-        + NativeDisplay<B, Arguments = Arguments, Error = <<D as Device>::Surface as Surface>::Error>
+        + NativeDisplay<B, Arguments = Arguments>
         + 'static,
-    <D as Device>::Surface: NativeSurface,
+    <D as Device>::Surface: NativeSurface<Error = <<D as Device>::Surface as Surface>::Error>,
 {
     dev: EGLDisplay<B, D>,
     logger: ::slog::Logger,
@@ -67,11 +67,11 @@ where
 
 impl<B, D> AsRawFd for EglDevice<B, D>
 where
-    B: Backend<Surface = <D as Device>::Surface> + 'static,
+    B: Backend<Surface = <D as Device>::Surface, Error = <<D as Device>::Surface as Surface>::Error> + 'static,
     D: Device
-        + NativeDisplay<B, Arguments = Arguments, Error = <<D as Device>::Surface as Surface>::Error>
+        + NativeDisplay<B, Arguments = Arguments>
         + 'static,
-    <D as Device>::Surface: NativeSurface,
+    <D as Device>::Surface: NativeSurface<Error = <<D as Device>::Surface as Surface>::Error>,
 {
     fn as_raw_fd(&self) -> RawFd {
         self.dev.borrow().as_raw_fd()
@@ -80,11 +80,11 @@ where
 
 impl<B, D> EglDevice<B, D>
 where
-    B: Backend<Surface = <D as Device>::Surface> + 'static,
+    B: Backend<Surface = <D as Device>::Surface, Error = <<D as Device>::Surface as Surface>::Error> + 'static,
     D: Device
-        + NativeDisplay<B, Arguments = Arguments, Error = <<D as Device>::Surface as Surface>::Error>
+        + NativeDisplay<B, Arguments = Arguments>
         + 'static,
-    <D as Device>::Surface: NativeSurface,
+    <D as Device>::Surface: NativeSurface<Error = <<D as Device>::Surface as Surface>::Error>,
 {
     /// Try to create a new [`EglDevice`] from an open device.
     ///
@@ -138,22 +138,22 @@ where
 
 struct InternalDeviceHandler<B, D>
 where
-    B: Backend<Surface = <D as Device>::Surface> + 'static,
+    B: Backend<Surface = <D as Device>::Surface, Error = <<D as Device>::Surface as Surface>::Error> + 'static,
     D: Device
-        + NativeDisplay<B, Arguments = Arguments, Error = <<D as Device>::Surface as Surface>::Error>
+        + NativeDisplay<B, Arguments = Arguments>
         + 'static,
-    <D as Device>::Surface: NativeSurface,
+    <D as Device>::Surface: NativeSurface<Error = <<D as Device>::Surface as Surface>::Error>,
 {
     handler: Box<dyn DeviceHandler<Device = EglDevice<B, D>> + 'static>,
 }
 
 impl<B, D> DeviceHandler for InternalDeviceHandler<B, D>
 where
-    B: Backend<Surface = <D as Device>::Surface> + 'static,
+    B: Backend<Surface = <D as Device>::Surface, Error = <<D as Device>::Surface as Surface>::Error> + 'static,
     D: Device
-        + NativeDisplay<B, Arguments = Arguments, Error = <<D as Device>::Surface as Surface>::Error>
+        + NativeDisplay<B, Arguments = Arguments>
         + 'static,
-    <D as Device>::Surface: NativeSurface,
+    <D as Device>::Surface: NativeSurface<Error = <<D as Device>::Surface as Surface>::Error>,
 {
     type Device = D;
 
@@ -167,11 +167,11 @@ where
 
 impl<B, D> Device for EglDevice<B, D>
 where
-    B: Backend<Surface = <D as Device>::Surface> + 'static,
+    B: Backend<Surface = <D as Device>::Surface, Error = <<D as Device>::Surface as Surface>::Error> + 'static,
     D: Device
-        + NativeDisplay<B, Arguments = Arguments, Error = <<D as Device>::Surface as Surface>::Error>
+        + NativeDisplay<B, Arguments = Arguments>
         + 'static,
-    <D as Device>::Surface: NativeSurface,
+    <D as Device>::Surface: NativeSurface<Error = <<D as Device>::Surface as Surface>::Error>,
 {
     type Surface = EglSurface<<D as Device>::Surface>;
 
@@ -250,11 +250,11 @@ where
 #[cfg(feature = "use_system_lib")]
 impl<B, D> EGLGraphicsBackend for EglDevice<B, D>
 where
-    B: Backend<Surface = <D as Device>::Surface> + 'static,
+    B: Backend<Surface = <D as Device>::Surface, Error = <<D as Device>::Surface as Surface>::Error> + 'static,
     D: Device
-        + NativeDisplay<B, Arguments = Arguments, Error = <<D as Device>::Surface as Surface>::Error>
+        + NativeDisplay<B, Arguments = Arguments>
         + 'static,
-    <D as Device>::Surface: NativeSurface,
+    <D as Device>::Surface: NativeSurface<Error = <<D as Device>::Surface as Surface>::Error>,
 {
     fn bind_wl_display(&self, display: &Display) -> Result<EGLBufferReader, EGLError> {
         self.dev.bind_wl_display(display)
@@ -263,11 +263,11 @@ where
 
 impl<B, D> Drop for EglDevice<B, D>
 where
-    B: Backend<Surface = <D as Device>::Surface> + 'static,
+    B: Backend<Surface = <D as Device>::Surface, Error = <<D as Device>::Surface as Surface>::Error> + 'static,
     D: Device
-        + NativeDisplay<B, Arguments = Arguments, Error = <<D as Device>::Surface as Surface>::Error>
+        + NativeDisplay<B, Arguments = Arguments>
         + 'static,
-    <D as Device>::Surface: NativeSurface,
+    <D as Device>::Surface: NativeSurface<Error = <<D as Device>::Surface as Surface>::Error>,
 {
     fn drop(&mut self) {
         self.clear_handler();
