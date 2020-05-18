@@ -14,6 +14,7 @@ use super::{Error, GbmDevice, GbmSurface};
 use drm::control::{connector, crtc, Device as ControlDevice, Mode};
 use gbm::AsRaw;
 use std::marker::PhantomData;
+use std::sync::Arc;
 use nix::libc::{c_void, c_int};
 
 /// Egl Gbm backend type
@@ -80,7 +81,7 @@ unsafe impl<D: RawDevice + 'static> NativeSurface for GbmSurface<D> {
 
     unsafe fn create(
         &self,
-        display: &EGLDisplayHandle,
+        display: &Arc<EGLDisplayHandle>,
         config_id: ffi::egl::types::EGLConfig,
         surface_attributes: &[c_int]
     ) -> Result<*const c_void, SurfaceCreationError<Self::Error>> {

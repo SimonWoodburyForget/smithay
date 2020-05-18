@@ -70,7 +70,7 @@ impl<N: native::NativeSurface> EGLSurface<N> {
         };
 
         let surface = unsafe {
-            native.create(&*display, config, &surface_attributes)?
+            native.create(&display, config, &surface_attributes)?
         };
 
         if surface == ffi::egl::NO_SURFACE {
@@ -112,7 +112,7 @@ impl<N: native::NativeSurface> EGLSurface<N> {
                 let _ = unsafe { ffi::egl::DestroySurface(**self.display, surface as *const _) };
             }
             self.surface.set(unsafe {
-                self.native.create(&*self.display, self.config_id, &self.surface_attributes).map_err(|err| match err {
+                self.native.create(&self.display, self.config_id, &self.surface_attributes).map_err(|err| match err {
                     SurfaceCreationError::EGLSurfaceCreationFailed(err) => SwapBuffersError::EGLCreateWindowSurface(err),
                     SurfaceCreationError::NativeSurfaceCreationFailed(err) => SwapBuffersError::Underlying(err),
                 })?

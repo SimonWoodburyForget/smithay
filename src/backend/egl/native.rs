@@ -2,6 +2,7 @@
 
 use super::{ffi, Error, EGLError, display::EGLDisplayHandle, SurfaceCreationError, wrap_egl_call};
 use nix::libc::{c_void, c_int};
+use std::sync::Arc;
 
 #[cfg(feature = "backend_winit")]
 use wayland_egl as wegl;
@@ -194,7 +195,7 @@ pub unsafe trait NativeSurface {
     /// if `needs_recreation` can return `true`.
     unsafe fn create(
         &self,
-        display: &EGLDisplayHandle,
+        display: &Arc<EGLDisplayHandle>,
         config_id: ffi::egl::types::EGLConfig,
         surface_attributes: &[c_int]
     ) -> Result<*const c_void, SurfaceCreationError<Self::Error>>;
@@ -224,7 +225,7 @@ unsafe impl NativeSurface for XlibWindow {
 
     unsafe fn create(
         &self,
-        display: &EGLDisplayHandle,
+        display: &Arc<EGLDisplayHandle>,
         config_id: ffi::egl::types::EGLConfig,
         surface_attributes: &[c_int]
     ) -> Result<*const c_void, SurfaceCreationError<Error>> {
@@ -242,7 +243,7 @@ unsafe impl NativeSurface for wegl::WlEglSurface {
     type Error = Error;
 
     unsafe fn create(&self,
-        display: &EGLDisplayHandle,
+        display: &Arc<EGLDisplayHandle>,
         config_id: ffi::egl::types::EGLConfig,
         surface_attributes: &[c_int]
     ) -> Result<*const c_void, SurfaceCreationError<Error>> {
