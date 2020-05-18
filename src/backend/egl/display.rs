@@ -92,8 +92,11 @@ impl<B: native::Backend, N: native::NativeDisplay<B>> EGLDisplay<B, N> {
 
         let display = unsafe {
             B::get_display(ptr, &egl_attribs, |e: &str| dp_extensions.iter().any(|s| s == e), log.clone())
-                .map_err(Error::DisplayNotSupported)?
+                .map_err(Error::DisplayCreationError)?
         };
+        if display == ffi::egl::NO_DISPLAY {
+            return Err(Error::DisplayNotSupported);
+        }
 
         let egl_version = {
             let mut major: MaybeUninit<ffi::egl::types::EGLint> = MaybeUninit::uninit();
