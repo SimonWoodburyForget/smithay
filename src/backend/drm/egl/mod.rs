@@ -63,6 +63,8 @@ where
     default_attributes: GlAttributes,
     default_requirements: PixelFormatRequirements,
     backends: Rc<RefCell<HashMap<crtc::Handle, BackendRef<D>>>>,
+    #[cfg(feature = "backend_session")]
+    links: Vec<crate::signaling::SignalToken>,
 }
 
 impl<B, D> AsRawFd for EglDevice<B, D>
@@ -132,6 +134,8 @@ where
             default_requirements,
             backends: Rc::new(RefCell::new(HashMap::new())),
             logger: log,
+            #[cfg(feature = "backend_session")]
+            links: Vec::new(),
         })
     }
 }
